@@ -33,7 +33,7 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: ['http://localhost:8080', 'https://tonote-video-signing.netlify.app/'],
+    origin: ['http://localhost:8080', 'https://tonote-video-signing.netlify.app'],
     methods: ['*'],
   },
 });
