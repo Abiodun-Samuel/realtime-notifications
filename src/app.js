@@ -171,6 +171,10 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('notary-delete-tools', data);
   });
 
+  socket.on('notary-available', (data) => {
+    socket.broadcast.emit('notary-available', data);
+  });
+
   socket.on('notary-cancel-session', () => {
     socket.broadcast.emit('notary-cancel-session');
   });
