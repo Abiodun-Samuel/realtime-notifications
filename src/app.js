@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable no-unused-vars */
 const express = require('express');
 const helmet = require('helmet');
@@ -9,7 +10,7 @@ const passport = require('passport');
 const httpStatus = require('http-status');
 const { Server } = require('socket.io');
 const { createServer } = require('http');
-const axios = require('axios');
+// const axios = require('axios');
 
 const config = require('./config/config');
 const morgan = require('./config/morgan');
@@ -18,6 +19,7 @@ const { authLimiter } = require('./middlewares/rateLimiter');
 const routes = require('./routes/v1');
 const { errorConverter, errorHandler } = require('./middlewares/error');
 const ApiError = require('./utils/ApiError');
+const { addUser, getUser, deleteUser, getUsers, getAllUsers } = require('./events/users');
 
 // const Api = axios.create({
 //   baseURL: 'https://staging.gettonote.com/api/v1/',
@@ -60,8 +62,14 @@ app.use(mongoSanitize());
 app.use(compression());
 
 // enable cors
-app.use(cors());
-app.options('*', cors());
+const corsOption = {
+  origin: '*',
+  methods: '*',
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+};
+app.use(cors(corsOption));
+app.options('*', cors(corsOption));
 
 // jwt authentication
 app.use(passport.initialize());
@@ -90,8 +98,6 @@ app.use(errorConverter);
 app.use(errorHandler);
 
 io.use((socket, next) => {
-  // eslint-disable-next-line no-console
-  console.log(socket.handshake.auth.username);
   const { username } = socket.handshake.auth;
   if (!username) {
     return next(new Error('invalid username'));
@@ -118,16 +124,18 @@ io.use((socket, next) => {
   //   next();
 });
 
+// socket.broadcast.emit('notary-send-tools', data);
 io.on('connection', (socket) => {
-  socket.emit('session', {
-    username: socket.username,
-    //  userID: socket.userID,
-  });
-  socket.broadcast.emit('user connected', {
-    username: socket.username,
+  socket.on('notary-session-join', ({ room }) => {
+    addUser(socket.id, socket.username, room);
+    socket.join(room);
+    const user = getUser(socket.username);
+    socket.to(user.room).emit('join_message', {
+      message: `${user.name} has joined the notary session.`,
+    });
   });
 
-  socket.on('notary-send-tools', async (data) => {
+  socket.on('notary-send-tools', (data) => {
     // const response = await axios({
     //   method: 'GET',
     //   url: `https://staging.gettonote.com/api/v1/user-document-resource-tool/${data.id}`,
@@ -140,13 +148,11 @@ io.on('connection', (socket) => {
     //   },
     //   // data: {},
     // });
-    // eslint-disable-next-line no-console
-    // console.log(response.data.data);
-    // io.emit('notary-edit-tools', response.data.data);
-    socket.broadcast.emit('notary-send-tools', data);
+    const user = getUser(socket.username);
+    socket.to(user.room).emit('notary-send-tools', data);
   });
 
-  socket.on('notary-edit-tools', async (data) => {
+  socket.on('notary-edit-tools', (data) => {
     // const response = await axios({
     //   method: 'GET',
     //   url: `https://staging.gettonote.com/api/v1/user-document-resource-tool/${data.id}`,
@@ -159,33 +165,30 @@ io.on('connection', (socket) => {
     //   },
     //   // data: {},
     // });
-    // io.emit('notary-edit-tools', response.data.data);
-    socket.broadcast.emit('notary-edit-tools', data);
+    const user = getUser(socket.username);
+    socket.to(user.room).emit('notary-edit-tools', data);
   });
 
   socket.on('notary-complete-session', () => {
-    socket.broadcast.emit('notary-complete-session');
+    const user = getUser(socket.username);
+    socket.to(user.room).emit('notary-complete-session');
   });
 
   socket.on('notary-delete-tools', (data) => {
-    socket.broadcast.emit('notary-delete-tools', data);
+    const user = getUser(socket.username);
+    socket.to(user.room).emit('notary-delete-tools', data);
   });
 
   socket.on('notary-available', (data) => {
-    socket.broadcast.emit('notary-available', data);
+    const user = getUser(socket.username);
+    socket.to(user.room).emit('notary-available', data);
   });
 
   socket.on('notary-cancel-session', () => {
-    socket.broadcast.emit('notary-cancel-session');
+    const user = getUser(socket.username);
+    socket.to(user.room).emit('notary-cancel-session');
   });
 
-  socket.on('disconnecting', (reason) => {
-    if (reason === 'client namespace disconnect') {
-      // eslint-disable-next-line no-console
-      console.log(`${socket.username} has logged out`);
-      socket.broadcast.emit('logged', `${socket.username}`);
-    }
-  });
   socket.on('disconnect', (reason) => {
     if (reason === 'io server disconnect') {
       socket.connect();
