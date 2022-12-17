@@ -137,12 +137,13 @@ io.on('connection', (socket) => {
         message: `${newUser.name} has joined the notary session.`,
       });
       // socket.broadcast.emit('join_message', 'newUser data');
+    } else {
+      const existUser = getUser(socket.username);
+      console.log({ existUser });
+      socket.to(existUser.room).emit('join_message', {
+        message: `${existUser.name} is already in the notary session.`,
+      });
     }
-    const existUser = getUser(socket.username);
-    console.log({ existUser });
-    socket.to(existUser.room).emit('join_message', {
-      message: `${existUser.name} is already in the notary session.`,
-    });
     // socket.broadcast.emit('join_message', 'existng User data');
   });
 
