@@ -127,12 +127,23 @@ io.use((socket, next) => {
 // socket.broadcast.emit('notary-send-tools', data);
 io.on('connection', (socket) => {
   socket.on('notary-session-join', ({ room }) => {
-    addUser(socket.id, socket.username, room);
-    socket.join(room);
-    const user = getUser(socket.username);
-    socket.to(user.room).emit('join_message', {
-      message: `${user.name} has joined the notary session.`,
+    const { user, error } = addUser(socket.id, socket.username, room);
+    // if (error) return callback(error);
+    if (user) {
+      socket.join(room);
+      const newUser = getUser(user.name);
+      console.log({ newUser });
+      socket.to(newUser.room).emit('join_message', {
+        message: `${newUser.name} has joined the notary session.`,
+      });
+      // socket.broadcast.emit('join_message', 'newUser data');
+    }
+    const existUser = getUser(socket.username);
+    console.log({ existUser });
+    socket.to(existUser.room).emit('join_message', {
+      message: `${existUser.name} is already in the notary session.`,
     });
+    // socket.broadcast.emit('join_message', 'existng User data');
   });
 
   socket.on('notary-send-tools', (data) => {
