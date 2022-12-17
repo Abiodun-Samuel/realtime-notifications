@@ -21,16 +21,6 @@ const { errorConverter, errorHandler } = require('./middlewares/error');
 const ApiError = require('./utils/ApiError');
 const { addUser, getUser, deleteUser, getUsers, getAllUsers } = require('./events/users');
 
-// const Api = axios.create({
-//   baseURL: 'https://staging.gettonote.com/api/v1/',
-//   withCredentials: false,
-//   headers: {
-//     Accept: 'application/json',
-//     'Content-type': 'application/json',
-//     'Access-Control-Allow-Origin': 'true',
-//   },
-// });
-
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -127,78 +117,34 @@ io.use((socket, next) => {
 // socket.broadcast.emit('notary-send-tools', data);
 io.on('connection', (socket) => {
   socket.on('notary-session-join', ({ room }) => {
-    const { user, error } = addUser(socket.id, socket.username, room);
-    // if (error) return callback(error);
-    if (user) {
-      socket.join(room);
-      const newUser = getUser(user.name);
-      console.log({ newUser });
-      socket.to(newUser.room).emit('join_message', {
-        message: `${newUser.name} has joined the notary session.`,
-      });
-      // socket.broadcast.emit('join_message', 'newUser data');
-    } else {
-      const existUser = getUser(socket.username);
-      console.log({ existUser });
-      socket.to(existUser.room).emit('join_message', {
-        message: `${existUser.name} is already in the notary session.`,
-      });
-    }
-    // socket.broadcast.emit('join_message', 'existng User data');
+    socket.join(room);
+    socket.to(room).emit('join_message', {
+      message: `${socket.username} has joined the notary session.`,
+    });
   });
 
-  socket.on('notary-send-tools', (data) => {
-    // const response = await axios({
-    //   method: 'GET',
-    //   url: `https://staging.gettonote.com/api/v1/user-document-resource-tool/${data.id}`,
-    //   headers: {
-    //     withCredentials: false,
-    //     Accept: 'application/json',
-    //     'Content-type': 'application/json',
-    //     'Access-Control-Allow-Origin': 'true',
-    //     Authorization: `Bearer ${data.token}`,
-    //   },
-    //   // data: {},
-    // });
-    const user = getUser(socket.username);
-    socket.to(user.room).emit('notary-send-tools', data);
+  socket.on('notary-available', (room, data) => {
+    socket.to(room).emit('notary-available', data);
   });
 
-  socket.on('notary-edit-tools', (data) => {
-    // const response = await axios({
-    //   method: 'GET',
-    //   url: `https://staging.gettonote.com/api/v1/user-document-resource-tool/${data.id}`,
-    //   headers: {
-    //     withCredentials: false,
-    //     Accept: 'application/json',
-    //     'Content-type': 'application/json',
-    //     'Access-Control-Allow-Origin': 'true',
-    //     Authorization: `Bearer ${data.token}`,
-    //   },
-    //   // data: {},
-    // });
-    const user = getUser(socket.username);
-    socket.to(user.room).emit('notary-edit-tools', data);
+  socket.on('notary-send-tools', (room, data) => {
+    socket.to(room).emit('notary-send-tools', data);
   });
 
-  socket.on('notary-complete-session', () => {
-    const user = getUser(socket.username);
-    socket.to(user.room).emit('notary-complete-session');
+  socket.on('notary-edit-tools', (room, data) => {
+    socket.to(room).emit('notary-edit-tools', data);
   });
 
-  socket.on('notary-delete-tools', (data) => {
-    const user = getUser(socket.username);
-    socket.to(user.room).emit('notary-delete-tools', data);
+  socket.on('notary-complete-session', (room) => {
+    socket.to(room).emit('notary-complete-session');
   });
 
-  socket.on('notary-available', (data) => {
-    const user = getUser(socket.username);
-    socket.to(user.room).emit('notary-available', data);
+  socket.on('notary-delete-tools', (room, data) => {
+    socket.to(room).emit('notary-delete-tools', data);
   });
 
-  socket.on('notary-cancel-session', () => {
-    const user = getUser(socket.username);
-    socket.to(user.room).emit('notary-cancel-session');
+  socket.on('notary-cancel-session', (room) => {
+    socket.to(room).emit('notary-cancel-session');
   });
 
   socket.on('disconnect', (reason) => {
@@ -210,3 +156,44 @@ io.on('connection', (socket) => {
 
 module.exports = app;
 module.exports = httpServer;
+// const response = await axios({
+//   method: 'GET',
+//   url: `https://staging.gettonote.com/api/v1/user-document-resource-tool/${data.id}`,
+//   headers: {
+//     withCredentials: false,
+//     Accept: 'application/json',
+//     'Content-type': 'application/json',
+//     'Access-Control-Allow-Origin': 'true',
+//     Authorization: `Bearer ${data.token}`,
+//   },
+//   // data: {},
+// });
+
+//  const { user, error } = addUser(socket.id, socket.username, room);
+//     // if (error) return callback(error);
+//     if (user) {
+//       socket.join(room);
+//       const newUser = getUser(user.name);
+//       // console.log({ newUser });
+//       socket.to(newUser.room).emit('join_message', {
+//         message: `${newUser.name} has joined the notary session.`,
+//       });
+//       // socket.broadcast.emit('join_message', 'newUser data');
+//     } else {
+//       const existUser = getUser(socket.username);
+//       // console.log({ existUser });
+//       socket.to(existUser.room).emit('join_message', {
+//         message: `${existUser.name} is already in the notary session.`,
+//       });
+//     }
+//     console.log(getAllUsers());
+//     // socket.broadcast.emit('join_message', 'existng User data');
+// const Api = axios.create({
+//   baseURL: 'https://staging.gettonote.com/api/v1/',
+//   withCredentials: false,
+//   headers: {
+//     Accept: 'application/json',
+//     'Content-type': 'application/json',
+//     'Access-Control-Allow-Origin': 'true',
+//   },
+// });
