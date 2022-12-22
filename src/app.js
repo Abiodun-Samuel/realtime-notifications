@@ -117,36 +117,39 @@ io.use((socket, next) => {
 
 // socket.broadcast.emit('notary-send-tools', data);
 io.on('connection', (socket) => {
-  socket.emit('connected', socket.id);
-
-  socket.on('notary-session-join', ({ room }) => {
-    socket.join(room);
-    socket.to(room).emit('join_message', {
-      message: `${socket.username} has joined the notary session.`,
-    });
+  const room = socket.username.split('***')[1];
+  socket.join(room);
+  socket.emit('connect_message', {
+    message: `${socket.username.split('***')[0]} has connected.`,
+  });
+  io.in(room).emit('join_message_room', {
+    message: `${socket.username.split('***')[0]} has joined the notary session. ${room}`,
+  });
+  socket.to(room).emit('join_message_others', {
+    message: `${socket.username.split('***')[0]} has joined the notary session. ${room}`,
   });
 
-  socket.on('notary-available', (room, data) => {
+  socket.on('notary-available', (data) => {
     socket.to(room).emit('notary-available', data);
   });
 
-  socket.on('notary-send-tools', (room, data) => {
+  socket.on('notary-send-tools', (data) => {
     socket.to(room).emit('notary-send-tools', data);
   });
 
-  socket.on('notary-edit-tools', (room, data) => {
+  socket.on('notary-edit-tools', (data) => {
     socket.to(room).emit('notary-edit-tools', data);
   });
 
-  socket.on('notary-complete-session', (room) => {
+  socket.on('notary-complete-session', () => {
     socket.to(room).emit('notary-complete-session');
   });
 
-  socket.on('notary-delete-tools', (room, data) => {
+  socket.on('notary-delete-tools', (data) => {
     socket.to(room).emit('notary-delete-tools', data);
   });
 
-  socket.on('notary-cancel-session', (room) => {
+  socket.on('notary-cancel-session', () => {
     socket.to(room).emit('notary-cancel-session');
   });
 
