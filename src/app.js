@@ -23,11 +23,18 @@ const { addUser, getUser, deleteUser, getUsers, getAllUsers } = require('./event
 
 const app = express();
 const httpServer = createServer(app);
+const corsOption = {
+  origin: ['http://localhost:8080', 'https://tonote-video-signing.netlify.app'],
+  methods: ['*'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+  credentials: true,
+  transports: ['websocket', 'polling'],
+};
+
 const io = new Server(httpServer, {
-  cors: {
-    origin: ['http://localhost:8080', 'https://tonote-video-signing.netlify.app'],
-    methods: ['*'],
-  },
+  cors: corsOption,
+  allowEIO3: true,
 });
 
 if (config.env !== 'test') {
@@ -52,12 +59,6 @@ app.use(mongoSanitize());
 app.use(compression());
 
 // enable cors
-const corsOption = {
-  origin: '*',
-  methods: '*',
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
-};
 app.use(cors(corsOption));
 app.options('*', cors(corsOption));
 
@@ -116,6 +117,8 @@ io.use((socket, next) => {
 
 // socket.broadcast.emit('notary-send-tools', data);
 io.on('connection', (socket) => {
+  socket.emit('connected', socket.id);
+
   socket.on('notary-session-join', ({ room }) => {
     socket.join(room);
     socket.to(room).emit('join_message', {
