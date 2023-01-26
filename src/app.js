@@ -1,5 +1,5 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable no-console */
-/* eslint-disable no-unused-vars */
 const express = require('express');
 const helmet = require('helmet');
 const xss = require('xss-clean');
@@ -10,7 +10,6 @@ const passport = require('passport');
 const httpStatus = require('http-status');
 const { Server } = require('socket.io');
 const { createServer } = require('http');
-// const axios = require('axios');
 
 const config = require('./config/config');
 const morgan = require('./config/morgan');
@@ -19,12 +18,12 @@ const { authLimiter } = require('./middlewares/rateLimiter');
 const routes = require('./routes/v1');
 const { errorConverter, errorHandler } = require('./middlewares/error');
 const ApiError = require('./utils/ApiError');
-const { addUser, getUser, deleteUser, getUsers, getAllUsers } = require('./events/users');
+const events = require('./utils/constants');
 
 const app = express();
 const httpServer = createServer(app);
 const corsOption = {
-  origin: ['http://localhost:8080', 'https://tonote-video-signing.netlify.app'],
+  origin: [config.url_1, config.url_2, config.url_3, config.url_4, config.url_5],
   methods: ['*'],
   preflightContinue: false,
   optionsSuccessStatus: 204,
@@ -41,7 +40,6 @@ if (config.env !== 'test') {
   app.use(morgan.successHandler);
   app.use(morgan.errorHandler);
 }
-
 // set security HTTP headers
 app.use(helmet());
 
@@ -90,69 +88,46 @@ app.use(errorHandler);
 
 io.use((socket, next) => {
   const { username } = socket.handshake.auth;
-  if (!username) {
-    return next(new Error('invalid username'));
+  const { sessionRoom } = socket.handshake.auth;
+
+  if (!username && !sessionRoom) {
+    return next(new Error('invalid username and SessionRoom'));
   }
-  if (username) {
-    // find existing session
-    // const session = sessionStore.findSession(sessionID);
-    // if (session) {
-    // eslint-disable-next-line no-param-reassign
+  if (username && sessionRoom) {
     socket.username = username;
-    //  socket.userID = session.userID;
-    //  socket.username = session.username;
+    socket.sessionRoom = sessionRoom;
     return next();
-    // }
   }
-  //   const username = socket.handshake.auth.username;
-  //   if (!username) {
-  //     return next(new Error("invalid username"));
-  //   }
-  //   // create new session
-  //   socket.sessionID = randomId();
-  //   socket.userID = randomId();
-  //   socket.username = username;
-  //   next();
 });
 
-// socket.broadcast.emit('notary-send-tools', data);
 io.on('connection', (socket) => {
-  const room = socket.username.split('***')[1];
+  const room = socket.sessionRoom;
   socket.join(room);
-  socket.emit('connect_message', {
-    message: `${socket.username.split('***')[0]} has connected.`,
-  });
-  io.in(room).emit('join_message_room', {
-    message: `${socket.username.split('***')[0]} has joined the notary session. ${room}`,
-  });
-  socket.to(room).emit('join_message_others', {
-    message: `${socket.username.split('***')[0]} has joined the notary session. ${room}`,
-  });
 
-  socket.on('notary-available', (data) => {
-    socket.to(room).emit('notary-available', data);
+  io.in(room).emit(events.JOIN_ROOM_MESSAGE, {
+    message: `Name:${socket.username} has joined the notary session, Room:${room}`,
   });
-
-  socket.on('notary-send-tools', (data) => {
-    socket.to(room).emit('notary-send-tools', data);
+  socket.on(events.NOTARY_AVAILABLE, (data) => {
+    socket.to(room).emit(events.NOTARY_AVAILABLE, data);
   });
-
-  socket.on('notary-edit-tools', (data) => {
-    socket.to(room).emit('notary-edit-tools', data);
+  socket.on(events.NOTARY_SEND_TOOLS, (data) => {
+    socket.to(room).emit(events.NOTARY_SEND_TOOLS, data);
   });
-
-  socket.on('notary-complete-session', () => {
-    socket.to(room).emit('notary-complete-session');
+  socket.on(events.NOTARY_EDIT_TOOLS, (data) => {
+    socket.to(room).emit(events.NOTARY_EDIT_TOOLS, data);
   });
-
-  socket.on('notary-delete-tools', (data) => {
-    socket.to(room).emit('notary-delete-tools', data);
+  socket.on(events.NOTARY_DELETE_TOOLS, (data) => {
+    socket.to(room).emit(events.NOTARY_DELETE_TOOLS, data);
   });
-
-  socket.on('notary-cancel-session', () => {
-    socket.to(room).emit('notary-cancel-session');
+  socket.on(events.NOTARY_COMPLETE_SESSION, () => {
+    socket.to(room).emit(events.NOTARY_COMPLETE_SESSION);
   });
-
+  socket.on(events.NOTARY_CANCEL_SESSION, () => {
+    socket.to(room).emit(events.NOTARY_CANCEL_SESSION);
+  });
+  socket.on(events.REMOVE, (data) => {
+    socket.to(room).emit(events.REMOVE, data);
+  });
   socket.on('disconnect', (reason) => {
     if (reason === 'io server disconnect') {
       socket.connect();
@@ -162,44 +137,3 @@ io.on('connection', (socket) => {
 
 module.exports = app;
 module.exports = httpServer;
-// const response = await axios({
-//   method: 'GET',
-//   url: `https://staging.gettonote.com/api/v1/user-document-resource-tool/${data.id}`,
-//   headers: {
-//     withCredentials: false,
-//     Accept: 'application/json',
-//     'Content-type': 'application/json',
-//     'Access-Control-Allow-Origin': 'true',
-//     Authorization: `Bearer ${data.token}`,
-//   },
-//   // data: {},
-// });
-
-//  const { user, error } = addUser(socket.id, socket.username, room);
-//     // if (error) return callback(error);
-//     if (user) {
-//       socket.join(room);
-//       const newUser = getUser(user.name);
-//       // console.log({ newUser });
-//       socket.to(newUser.room).emit('join_message', {
-//         message: `${newUser.name} has joined the notary session.`,
-//       });
-//       // socket.broadcast.emit('join_message', 'newUser data');
-//     } else {
-//       const existUser = getUser(socket.username);
-//       // console.log({ existUser });
-//       socket.to(existUser.room).emit('join_message', {
-//         message: `${existUser.name} is already in the notary session.`,
-//       });
-//     }
-//     console.log(getAllUsers());
-//     // socket.broadcast.emit('join_message', 'existng User data');
-// const Api = axios.create({
-//   baseURL: 'https://staging.gettonote.com/api/v1/',
-//   withCredentials: false,
-//   headers: {
-//     Accept: 'application/json',
-//     'Content-type': 'application/json',
-//     'Access-Control-Allow-Origin': 'true',
-//   },
-// });

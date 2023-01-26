@@ -61,4 +61,9 @@ module.exports = {
     },
     from: envVars.EMAIL_FROM,
   },
+  url_1: envVars.URL_1,
+  url_2: envVars.URL_2,
+  url_3: envVars.URL_3,
+  url_4: envVars.URL_4,
+  url_5: envVars.URL_5,
 };
