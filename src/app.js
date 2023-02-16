@@ -19,6 +19,7 @@ const routes = require('./routes/v1');
 const { errorConverter, errorHandler } = require('./middlewares/error');
 const ApiError = require('./utils/ApiError');
 const events = require('./utils/constants');
+const saveData = require('./utils/saveData');
 
 const app = express();
 const httpServer = createServer(app);
@@ -68,7 +69,6 @@ passport.use('jwt', jwtStrategy);
 if (config.env === 'production') {
   app.use('/v1/auth', authLimiter);
 }
-
 // v1 api routes
 app.get('/', (req, res) => {
   res.status(200).json({ message: 'ToNote Notification App' });
@@ -86,27 +86,53 @@ app.use(errorConverter);
 // handle error
 app.use(errorHandler);
 
+// socket events
+// const socketByUser = {};
+const dataChunks = {};
+
 io.use((socket, next) => {
   const { username } = socket.handshake.auth;
   const { sessionRoom } = socket.handshake.auth;
+  const { sessionTitle } = socket.handshake.auth;
 
   if (!username && !sessionRoom) {
-    return next(new Error('invalid username and SessionRoom'));
+    return next(new Error('Invalid username and SessionRoom'));
   }
   if (username && sessionRoom) {
     socket.username = username;
     socket.sessionRoom = sessionRoom;
+    socket.sessionTitle = sessionTitle;
     return next();
   }
 });
 
 io.on('connection', (socket) => {
   const room = socket.sessionRoom;
+  // session title === videofile
+  const videoFile = socket.sessionTitle;
+
   socket.join(room);
 
   io.in(room).emit(events.JOIN_ROOM_MESSAGE, {
     message: `Name:${socket.username} has joined the notary session, Room:${room}`,
   });
+
+  socket.on('screenData:start', ({ data, videoName }) => {
+    console.log(dataChunks);
+    if (dataChunks[videoName]) {
+      dataChunks[videoName].push(data);
+    } else {
+      dataChunks[videoName] = [data];
+    }
+  });
+
+  socket.on('screenData:end', (videoName) => {
+    if (dataChunks[videoName] && dataChunks[videoName].length) {
+      saveData(dataChunks[videoName], videoName);
+      dataChunks[videoName] = [];
+    }
+  });
+
   socket.on(events.NOTARY_AVAILABLE, (data) => {
     socket.to(room).emit(events.NOTARY_AVAILABLE, data);
   });
@@ -129,6 +155,10 @@ io.on('connection', (socket) => {
     socket.to(room).emit(events.REMOVE, data);
   });
   socket.on('disconnect', (reason) => {
+    if (dataChunks[videoFile] && dataChunks[videoFile].length) {
+      saveData(dataChunks[videoFile], videoFile);
+      dataChunks[videoFile] = [];
+    }
     if (reason === 'io server disconnect') {
       socket.connect();
     }
