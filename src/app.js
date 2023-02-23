@@ -91,15 +91,14 @@ app.use(errorHandler);
 const dataChunks = {};
 
 io.use((socket, next) => {
-  const { username } = socket.handshake.auth;
-  const { sessionRoom } = socket.handshake.auth;
-  const { sessionTitle } = socket.handshake.auth;
+  const { username, token, sessionRoom, sessionTitle } = socket.handshake.auth;
 
-  if (!username && !sessionRoom) {
-    return next(new Error('Invalid username and SessionRoom'));
+  if (!username && !sessionRoom && !token) {
+    return next(new Error('Invalid user details'));
   }
-  if (username && sessionRoom) {
+  if (username && sessionRoom && token) {
     socket.username = username;
+    socket.token = token;
     socket.sessionRoom = sessionRoom;
     socket.sessionTitle = sessionTitle;
     return next();
@@ -110,11 +109,17 @@ io.on('connection', (socket) => {
   const room = socket.sessionRoom;
   // session title === videofile
   const videoFile = socket.sessionTitle;
+  const userToken = socket.token;
+  console.log(userToken);
 
   socket.join(room);
 
   io.in(room).emit(events.JOIN_ROOM_MESSAGE, {
     message: `Name:${socket.username} has joined the notary session, Room:${room}`,
+  });
+
+  socket.on('play_sound', () => {
+    io.in(room).emit('play_sound', 'music is playing');
   });
 
   socket.on('screenData:start', ({ data, videoName }) => {
@@ -154,6 +159,7 @@ io.on('connection', (socket) => {
   socket.on(events.REMOVE, (data) => {
     socket.to(room).emit(events.REMOVE, data);
   });
+
   socket.on('disconnect', (reason) => {
     if (dataChunks[videoFile] && dataChunks[videoFile].length) {
       saveData(dataChunks[videoFile], videoFile);
