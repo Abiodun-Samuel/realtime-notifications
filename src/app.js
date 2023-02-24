@@ -122,6 +122,10 @@ io.on('connection', (socket) => {
     io.in(room).emit('play_sound', 'music is playing');
   });
 
+  socket.on('recording_stopped_sound', () => {
+    io.in(room).emit('recording_stopped_sound');
+  });
+
   socket.on('screenData:start', ({ data, videoName }) => {
     console.log(dataChunks);
     if (dataChunks[videoName]) {
