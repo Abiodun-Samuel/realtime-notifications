@@ -121,6 +121,13 @@ io.on('connection', (socket) => {
   socket.on('play_sound', () => {
     io.in(room).emit('play_sound', 'music is playing');
   });
+  
+  socket.on("stop_recording", () => {
+    io.in(room).emit("stop_recording");
+  });
+  socket.on("show_recording_notice", () => {
+    socket.to(room).emit("show_recording_notice");
+  });
 
   socket.on('recording_stopped_sound', () => {
     io.in(room).emit('recording_stopped_sound');

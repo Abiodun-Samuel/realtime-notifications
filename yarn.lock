@@ -1200,10 +1200,10 @@
   dependencies:
     "lodash" "^4.17.14"
 
-"async@^3.1.0", "async@^3.2.0", "async@>=0.2.9", "async@~3.2.0":
-  "integrity" "sha512-TR2mEZFVOj2pLStYxLht7TyfuRzaydfpxr3k9RpHIzMgw7A64dzsdqCxH1WJyQdoe8T10nDXd9wnEigmiuHIZw=="
-  "resolved" "https://registry.npmjs.org/async/-/async-3.2.0.tgz"
-  "version" "3.2.0"
+"async@^3.1.0", "async@^3.2.0", "async@^3.2.4", "async@>=0.2.9", "async@~3.2.0":
+  "integrity" "sha512-iAB+JbDEGXhyIUavoDl9WP/Jj106Kz9DEn1DPgYw5ruDn0e3Wgi3sKFm55sASdGBNOQB8F59d9qQ7deqrHA8wQ=="
+  "resolved" "https://registry.npmjs.org/async/-/async-3.2.4.tgz"
+  "version" "3.2.4"
 
 "async@~2.6.1":
   "integrity" "sha512-zflvls11DCy+dQWzTW2dzuilv8Z5X/pjfmZOWba6TNIVDm+2UDaJmXSOXlasHKfNBs8oo3M0aT50fDEWfKZjXg=="
