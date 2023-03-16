@@ -118,6 +118,30 @@ io.on('connection', (socket) => {
       message: `Name:${socket.username} has joined the notary session, Room:${room}`,
     });
   }
+  socket.on('NOTARY_AVAILABLE', (data) => {
+    socket.to(room).emit('NOTARY_AVAILABLE', data);
+  });
+  socket.on(events.NOTARY_SEND_TOOLS, (data) => {
+    socket.to(room).emit(events.NOTARY_SEND_TOOLS, data);
+  });
+  socket.on(events.NOTARY_EDIT_TOOLS, (data) => {
+    socket.to(room).emit(events.NOTARY_EDIT_TOOLS, data);
+  });
+  socket.on(events.NOTARY_DELETE_TOOLS, (data) => {
+    socket.to(room).emit(events.NOTARY_DELETE_TOOLS, data);
+  });
+  socket.on(events.NOTARY_COMPLETE_SESSION, () => {
+    socket.to(room).emit(events.NOTARY_COMPLETE_SESSION);
+  });
+  socket.on(events.NOTARY_CANCEL_SESSION, () => {
+    socket.to(room).emit(events.NOTARY_CANCEL_SESSION);
+  });
+  socket.on(events.REMOVE, (data) => {
+    socket.to(room).emit(events.REMOVE, data);
+  });
+  socket.on(events.NOTARY_NEW_REQUEST, (data) => {
+    io.emit(events.NOTARY_NEW_REQUEST, data);
+  });
 
   socket.on('play_sound', () => {
     io.in(room).emit('play_sound', 'music is playing');
@@ -148,28 +172,6 @@ io.on('connection', (socket) => {
       saveData(dataChunks[videoName], videoName);
       dataChunks[videoName] = [];
     }
-  });
-
-  socket.on(events.NOTARY_AVAILABLE, (data) => {
-    socket.to(room).emit(events.NOTARY_AVAILABLE, data);
-  });
-  socket.on(events.NOTARY_SEND_TOOLS, (data) => {
-    socket.to(room).emit(events.NOTARY_SEND_TOOLS, data);
-  });
-  socket.on(events.NOTARY_EDIT_TOOLS, (data) => {
-    socket.to(room).emit(events.NOTARY_EDIT_TOOLS, data);
-  });
-  socket.on(events.NOTARY_DELETE_TOOLS, (data) => {
-    socket.to(room).emit(events.NOTARY_DELETE_TOOLS, data);
-  });
-  socket.on(events.NOTARY_COMPLETE_SESSION, () => {
-    socket.to(room).emit(events.NOTARY_COMPLETE_SESSION);
-  });
-  socket.on(events.NOTARY_CANCEL_SESSION, () => {
-    socket.to(room).emit(events.NOTARY_CANCEL_SESSION);
-  });
-  socket.on(events.REMOVE, (data) => {
-    socket.to(room).emit(events.REMOVE, data);
   });
 
   socket.on('disconnect', (reason) => {
