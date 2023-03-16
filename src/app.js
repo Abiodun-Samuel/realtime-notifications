@@ -107,10 +107,7 @@ io.use((socket, next) => {
 
 io.on('connection', (socket) => {
   const userName = socket.username;
-
-  socket.on('connect', () => {
-    socket.emit(`${userName} User connected`);
-  });
+  socket.emit('connected', `${userName} User connected`);
 
   const room = socket.sessionRoom;
   const videoFile = socket.sessionTitle;
