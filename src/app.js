@@ -93,10 +93,10 @@ const dataChunks = {};
 io.use((socket, next) => {
   const { username, token, sessionRoom, sessionTitle } = socket.handshake.auth;
 
-  if (!username && !sessionRoom && !token) {
+  if (!username && !token) {
     return next(new Error('Invalid user details'));
   }
-  if (username && sessionRoom && token) {
+  if (username && token) {
     socket.username = username;
     socket.token = token;
     socket.sessionRoom = sessionRoom;
@@ -106,27 +106,31 @@ io.use((socket, next) => {
 });
 
 io.on('connection', (socket) => {
-  const room = socket.sessionRoom;
-  // session title === videofile
-  const videoFile = socket.sessionTitle;
-  const userToken = socket.token;
-  console.log(userToken);
+  const userName = socket.username;
 
-  socket.join(room);
-
-  io.in(room).emit(events.JOIN_ROOM_MESSAGE, {
-    message: `Name:${socket.username} has joined the notary session, Room:${room}`,
+  socket.on('connect', () => {
+    socket.emit(`${userName} User connected`);
   });
+
+  const room = socket.sessionRoom;
+  const videoFile = socket.sessionTitle;
+  // const userToken = socket.token;
+  if (room) {
+    socket.join(room);
+    io.in(room).emit(events.JOIN_ROOM_MESSAGE, {
+      message: `Name:${socket.username} has joined the notary session, Room:${room}`,
+    });
+  }
 
   socket.on('play_sound', () => {
     io.in(room).emit('play_sound', 'music is playing');
   });
-  
-  socket.on("stop_recording", () => {
-    io.in(room).emit("stop_recording");
+
+  socket.on('stop_recording', () => {
+    io.in(room).emit('stop_recording');
   });
-  socket.on("show_recording_notice", () => {
-    socket.to(room).emit("show_recording_notice");
+  socket.on('show_recording_notice', () => {
+    socket.to(room).emit('show_recording_notice');
   });
 
   socket.on('recording_stopped_sound', () => {
