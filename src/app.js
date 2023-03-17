@@ -142,6 +142,15 @@ io.on('connection', (socket) => {
   socket.on(events.NOTARY_NEW_REQUEST, (data) => {
     io.emit(events.NOTARY_NEW_REQUEST, data);
   });
+  socket.on(events.NOTARY_ACCEPT_REQUEST, (data) => {
+    io.emit(events.NOTARY_ACCEPT_REQUEST, data);
+  });
+  socket.on(events.NOTARY_REJECT_REQUEST, (data) => {
+    io.emit(events.NOTARY_REJECT_REQUEST, data);
+  });
+  socket.on(events.NOTARY_CANCEL_REQUEST, (data) => {
+    io.emit(events.NOTARY_CANCEL_REQUEST, data);
+  });
 
   socket.on('play_sound', () => {
     io.in(room).emit('play_sound', 'music is playing');
