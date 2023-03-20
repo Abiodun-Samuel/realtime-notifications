@@ -152,34 +152,62 @@ io.on('connection', (socket) => {
     io.emit(events.NOTARY_CANCEL_REQUEST, data);
   });
 
+  // Update this lines
   socket.on('play_sound', () => {
-    io.in(room).emit('play_sound', 'music is playing');
+    // socket.to(room).emit("play_sound");
+    io.in(room).emit('play_sound');
   });
-
   socket.on('stop_recording', () => {
     io.in(room).emit('stop_recording');
   });
   socket.on('show_recording_notice', () => {
-    socket.to(room).emit('show_recording_notice');
+    // socket.to(room).emit("show_recording_notice");
+    io.in(room).emit('show_recording_notice');
   });
 
-  socket.on('recording_stopped_sound', () => {
-    io.in(room).emit('recording_stopped_sound');
-  });
+  // socket.on('play_sound', () => {
+  //   io.in(room).emit('play_sound', 'music is playing');
+  // });
 
-  socket.on('screenData:start', ({ data, videoName }) => {
-    console.log(dataChunks);
-    if (dataChunks[videoName]) {
-      dataChunks[videoName].push(data);
+  // socket.on('stop_recording', () => {
+  //   io.in(room).emit('stop_recording');
+  // });
+  // socket.on('show_recording_notice', () => {
+  //   socket.to(room).emit('show_recording_notice');
+  // });
+
+  // socket.on('recording_stopped_sound', () => {
+  //   io.in(room).emit('recording_stopped_sound');
+  // });
+
+  // socket.on('screenData:start', ({ data, videoName }) => {
+  //   console.log(dataChunks);
+  //   if (dataChunks[videoName]) {
+  //     dataChunks[videoName].push(data);
+  //   } else {
+  //     dataChunks[videoName] = [data];
+  //   }
+  // });
+  socket.on('screenData:start', ({ data, username }) => {
+    console.log('Processing:', dataChunks);
+    if (dataChunks[username]) {
+      dataChunks[username].push(data);
     } else {
-      dataChunks[videoName] = [data];
+      dataChunks[username] = [data];
     }
   });
 
-  socket.on('screenData:end', (videoName) => {
-    if (dataChunks[videoName] && dataChunks[videoName].length) {
-      saveData(dataChunks[videoName], videoName);
-      dataChunks[videoName] = [];
+  // socket.on('screenData:end', (videoName) => {
+  //   if (dataChunks[videoName] && dataChunks[videoName].length) {
+  //     saveData(dataChunks[videoName], videoName);
+  //     dataChunks[videoName] = [];
+  //   }
+  // });
+  socket.on('screenData:end', ({ username }) => {
+    // console.log("filename:", videoName)
+    if (dataChunks[username] && dataChunks[username].length) {
+      saveData(dataChunks[username], username);
+      dataChunks[username] = [];
     }
   });
 

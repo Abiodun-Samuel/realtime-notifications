@@ -6,9 +6,9 @@
 const { Blob, Buffer } = require('buffer');
 const fs = require('fs');
 
-const fsPromises = fs.promises;
-const path = require('path');
-// const { mkdir, open, unlink, writeFile } = require('fs').promises;
+// const fsPromises = fs.promises;
+// const path = require('path');
+const { mkdir, open, writeFile } = require('fs').promises;
 // import { join, dirname } from 'path';
 // import { fileURLToPath } from 'url';
 
@@ -22,6 +22,7 @@ const s3 = new AWS.S3({
 });
 
 ffmpeg.setFfmpegPath(pathf);
+
 const saveToAWs = async (file, fileName) => {
   const params = {
     Bucket: process.env.AWS_BUCKET_NAME,
@@ -31,6 +32,9 @@ const saveToAWs = async (file, fileName) => {
   s3.upload(params, function (s3Err, data) {
     if (s3Err) throw s3Err;
     console.log(`File uploaded successfully at ${data.Location}`);
+    // eslint-disable-next-line camelcase
+    // const video_link = data.Location;
+    // sendEmail(room, video_link, token);
   });
 };
 
@@ -51,25 +55,24 @@ const rmDir = async (dirPath, removeSelf) => {
     if (removeSelf) fs.rmdirSync(dirPath);
     else console.log('Directory is now empty');
   } catch (e) {
-    return e;
+    console.log(e);
   }
 };
 
-const saveData = async (data, videoName) => {
-  const videoPath = path.join(__dirname, '../video');
-
+const saveData = async (data, videoName, room, token) => {
+  const videoPath = fs.join(__dirname, '../video');
   const dirPath = `${videoPath}/`;
 
-  const fileName = `${videoName}-${Date.now()}.mp4`;
+  const fileName = `${Date.now()}-${videoName}.mp4`;
   const tempFilePath = `${dirPath}/temp-${fileName}`;
   const finalFilePath = `${dirPath}/${fileName}`;
 
   let fileHandle;
 
   try {
-    fileHandle = await fsPromises.open(dirPath);
+    fileHandle = await open(dirPath);
   } catch (error) {
-    await fsPromises.mkdir(dirPath);
+    await mkdir(dirPath);
   } finally {
     if (fileHandle) {
       fileHandle.close();
@@ -82,13 +85,13 @@ const saveData = async (data, videoName) => {
     });
     const videoBuffer = Buffer.from(await videoBlob.arrayBuffer());
 
-    await fsPromises.writeFile(tempFilePath, videoBuffer);
+    await writeFile(tempFilePath, videoBuffer);
 
     ffmpeg(tempFilePath)
       .outputOptions(['-c:v libvpx-vp9', '-r 5', '-crf 20', '-b:v 0', '-vf scale=1200:720', '-f mp4', '-preset ultrafast'])
       .on('end', async () => {
         console.log(`*** File ${fileName} created`);
-        await saveToAWs(finalFilePath, fileName);
+        await saveToAWs(finalFilePath, fileName, room, token);
         setTimeout(async () => {
           rmDir(dirPath);
         }, 2000);
@@ -98,4 +101,5 @@ const saveData = async (data, videoName) => {
     console.log('*** saveData', e);
   }
 };
+
 module.exports = saveData;
