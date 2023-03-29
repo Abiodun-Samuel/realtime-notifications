@@ -118,6 +118,12 @@ io.on('connection', (socket) => {
       message: `Name:${socket.username} has joined the notary session, Room:${room}`,
     });
   }
+  socket.on('owner_complete_session', () => {
+    io.in(room).emit('owner_complete_session');
+  });
+  socket.on('owner_cancelled_session', () => {
+    io.in(room).emit('owner_cancelled_session');
+  });
   socket.on('NOTARY_AVAILABLE', (data) => {
     socket.to(room).emit('NOTARY_AVAILABLE', data);
   });
