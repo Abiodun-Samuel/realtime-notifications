@@ -130,6 +130,9 @@ io.on('connection', (socket) => {
   socket.on(events.NOTARY_SEND_TOOLS, (data) => {
     socket.to(room).emit(events.NOTARY_SEND_TOOLS, data);
   });
+  socket.on(events.DOC_OWNER_INVITE_PARTICIPANTS, (data) => {
+    socket.to(room).emit(events.DOC_OWNER_INVITE_PARTICIPANTS, data);
+  });
   socket.on(events.NOTARY_EDIT_TOOLS, (data) => {
     socket.to(room).emit(events.NOTARY_EDIT_TOOLS, data);
   });
