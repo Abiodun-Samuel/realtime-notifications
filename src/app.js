@@ -118,6 +118,12 @@ io.on('connection', (socket) => {
       message: `Name:${socket.username} has joined the notary session, Room:${room}`,
     });
   }
+  socket.on('feed_back_modal', () => {
+    io.in(room).emit('feed_back_modal');
+  });
+  socket.on('show_completingSession_notice', () => {
+    socket.to(room).emit('show_completingSession_notice');
+  });
   socket.on('owner_complete_session', () => {
     io.in(room).emit('owner_complete_session');
   });
