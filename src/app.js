@@ -118,14 +118,11 @@ io.on('connection', (socket) => {
       message: `Name:${socket.username} has joined the notary session, Room:${room}`,
     });
   }
-  socket.on('alert', (data) => {
-    // Broadcast the alert event to all clients in the room except the sender
-    // io.in(room).emit('alert');
-    socket.to(room).emit('alert', data);
+  socket.on('SHOW_FEED_BACK', () => {
+    io.in(room).emit('SHOW_FEED_BACK');
   });
-
-  socket.on('feed_back_modal', () => {
-    io.in(room).emit('feed_back_modal');
+  socket.on('SHOW_COMPLETE_SESSION_NOTICE', () => {
+    socket.to(room).emit('SHOW_COMPLETE_SESSION_NOTICE');
   });
   socket.on('show_completingSession_notice', () => {
     socket.to(room).emit('show_completingSession_notice');
