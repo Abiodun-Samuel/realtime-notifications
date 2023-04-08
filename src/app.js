@@ -136,6 +136,9 @@ io.on('connection', (socket) => {
   socket.on('NOTARY_AVAILABLE', (data) => {
     socket.to(room).emit('NOTARY_AVAILABLE', data);
   });
+  socket.on('NOTARY_STARTS_COMPLETE_SESSION', (data) => {
+    socket.to(room).emit('NOTARY_STARTS_COMPLETE_SESSION', data);
+  });
   socket.on(events.NOTARY_SEND_TOOLS, (data) => {
     socket.to(room).emit(events.NOTARY_SEND_TOOLS, data);
   });
